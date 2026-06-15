@@ -11,9 +11,9 @@
       <div class="container">
         <h1>MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning</h1>
         <p class="authors">Thuan Minh Nguyen and Long Bao Le</p>
-        <p class="meta">Affiliation: <span>To be updated</span> &nbsp;|&nbsp; Venue: <span>To be updated</span></p>
+        <p class="meta">INRS, University of Qu&eacute;bec, Montr&eacute;al, QC, Canada &nbsp;|&nbsp; Venue: <span>To be updated</span></p>
         <p class="summary">
-          MemAdapter transforms heterogeneous retrieved memories into structured, verifiable, and recovery-aware planning guidance for VLM-based embodied agents.
+          A plug-and-play Memory Adapter that converts heterogeneous retrieved memories into structured, verifiable, and recovery-aware planning guidance for VLM-based embodied agents &mdash; without modifying the memory system or the planner.
         </p>
         <div class="button-row">
           <!-- Replace # with the final paper URL -->
@@ -48,34 +48,66 @@
         <div class="container">
           <h2>Abstract</h2>
           <p>
-            Memory-augmented VLM planning is promising for long-horizon embodied tasks, but directly injecting raw retrieved memories into a planner can be unreliable because such memories are verbose, heterogeneous, and unstructured. MemAdapter addresses this issue by converting retrieved spatial, temporal, episodic, and semantic memories into structured task-level guidance: a foresight plan, feasibility criteria, and a fallback strategy. This guidance helps the planner sequence long-horizon tasks, allows the critic to verify action feasibility, and supports recovery from failures under partial observability.
+            Memory-augmented Vision-Language Model (VLM) planning is a promising approach for long-horizon embodied tasks under partial observability. Existing systems typically retrieve task-relevant memories and inject them directly into the planner, but raw memories are often verbose, heterogeneous, and unstructured, making them difficult for the planner to use. We propose <strong>MemAdapter</strong>, a plug-and-play Memory Adapter that, conditioned on the task instruction, converts retrieved memories into structured, task-level guidance comprising a <em>foresight plan</em> for global task sequencing, <em>feasibility criteria</em> for critic-based action verification, and a <em>fallback strategy</em> for failure recovery.
+          </p>
+          <p>
+            Producing such guidance requires specialized reasoning that a compact LLM cannot reliably perform without dedicated training. We therefore train MemAdapter without manual annotation: we synthesize expert guidance targets with a frontier LLM, retain only those that do not degrade closed-loop execution via behavioral consensus filtering, and distill the filtered data into a compact 14B adapter through supervised fine-tuning. On 400 tasks from the EB-ALFRED and EB-Habitat environments of EmbodiedBench, with a frozen Qwen2.5-VL-72B-Instruct planner, our framework attains a <strong>79.50% average success rate</strong> &mdash; improving over the strongest memory-augmented framework under the same planner (RoboMemory) by 12.75 points, and surpassing the strongest standalone VLM agent (Claude-3.5-Sonnet) by 8.75 points despite building on a far weaker standalone planner. These results show that effective memory-augmented embodied planning requires not only retrieving memory but also adapting it into explicit, verifiable, and recovery-aware planning guidance.
           </p>
         </div>
       </section>
 
       <section class="section">
         <div class="container">
-          <h2>Method Overview</h2>
-          <div class="card-grid method-cards">
-            <article class="card">
-              <h3>1. Retrieve Multi-type Memories</h3>
-              <p>Collect spatial, temporal, episodic, and semantic memories relevant to the current instruction.</p>
-            </article>
-            <article class="card">
-              <h3>2. Adapt Memories into Structured Guidance</h3>
-              <p>Generate a foresight plan, feasibility criteria, and a fallback strategy from heterogeneous retrieved memories.</p>
-            </article>
-            <article class="card">
-              <h3>3. Plan, Verify, Execute, and Update Memory</h3>
-              <p>Use guidance for planning and critic verification, execute actions, and update memory for the next decision step.</p>
-            </article>
-          </div>
-          <!-- Replace images/method_overview.png with the final method figure -->
-          <img src="images/method_overview.png" alt="Method overview" class="wide-image" />
+          <h2>Key Contributions</h2>
+          <ul class="bullet-list">
+            <li><strong>MemAdapter:</strong> a plug-and-play module between memory retrieval and the VLM planner that converts heterogeneous retrieved memories (spatial, temporal, episodic, and semantic) into structured planning guidance without modifying either component.</li>
+            <li><strong>A structured guidance format</strong> with three components, each targeting a distinct stage of closed-loop planning: a <em>foresight plan</em>, <em>feasibility criteria</em> for the critic, and a <em>fallback strategy</em> for recovery.</li>
+            <li><strong>An automated fine-tuning pipeline</strong> that needs no manual annotation: a frontier LLM synthesizes expert guidance targets, behavioral consensus filtering discards targets that degrade closed-loop execution, and supervised fine-tuning distills the rest into MemAdapter.</li>
+            <li><strong>MemGuide:</strong> a memory-to-guidance dataset pairing task instructions and retrieved memories with their structured planning guidance, released to support future research.</li>
+          </ul>
         </div>
       </section>
 
       <section class="section section-alt">
+        <div class="container">
+          <h2>Method Overview</h2>
+          <div class="card-grid method-cards">
+            <article class="card">
+              <h3>1. Retrieve Multi-type Memories</h3>
+              <p>A multi-memory system retrieves the top-K task-relevant spatial, temporal, episodic, and semantic memories given the instruction and current observation.</p>
+            </article>
+            <article class="card">
+              <h3>2. Adapt Memories into Structured Guidance</h3>
+              <p>Invoked once per task, MemAdapter transforms the heterogeneous retrieved memories into a fixed, task-level guidance package consumed by the planner and critic.</p>
+            </article>
+            <article class="card">
+              <h3>3. Plan, Verify, Execute, Update</h3>
+              <p>A frozen VLM planner proposes short action plans grounded in guidance; a critic verifies feasibility; accepted actions execute and the memory updates for the next step.</p>
+            </article>
+          </div>
+          <!-- Replace images/method_overview.png with the final method figure -->
+          <img src="images/method_overview.png" alt="MemAdapter framework overview" class="wide-image" />
+          <p class="caption">Overview of the MemAdapter-enabled framework for memory-guided embodied planning.</p>
+
+          <h3 class="subhead">Structured Guidance <span class="muted-inline">&mdash; one package, three components</span></h3>
+          <div class="card-grid method-cards">
+            <article class="card">
+              <h3>Foresight Plan <span class="tag">P</span></h3>
+              <p>A task-level hypothesis describing high-level subgoals, likely search locations, necessary state changes, and the expected final condition &mdash; supplying global foresight for the planner.</p>
+            </article>
+            <article class="card">
+              <h3>Feasibility Criteria <span class="tag">C</span></h3>
+              <p>Per-action preconditions for the critic &mdash; visual-grounding requirements, object-state constraints, and affordance checks &mdash; that reduce hallucinated, infeasible, or task-inconsistent actions.</p>
+            </article>
+            <article class="card">
+              <h3>Fallback Strategy <span class="tag">F</span></h3>
+              <p>Recovery behavior for likely failure modes, invoked when the critic rejects an action or the observation contradicts the plan, grounding replanning in memory-derived locations and failure patterns.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
         <div class="container">
           <h2>Multimedia Materials</h2>
           <div class="card-grid media-grid">
@@ -111,7 +143,7 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-alt">
         <div class="container">
           <h2>Results</h2>
           <div class="card-grid metrics-grid">
@@ -135,7 +167,7 @@
         </div>
       </section>
 
-      <section class="section section-alt">
+      <section class="section">
         <div class="container">
           <h2>Qualitative Examples</h2>
           <!-- Replace images/qualitative_results.png with final qualitative results figure -->
@@ -148,14 +180,13 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-alt">
         <div class="container">
           <h2>Citation</h2>
-          <pre><code>@inproceedings{nguyen2026memadapter,
-title     = {MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning},
-author    = {Nguyen, Thuan Minh and Le, Long Bao},
-booktitle = {Conference Name},
-year      = {2026}
+          <pre><code>@article{nguyen2026memadapter,
+  title   = {MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning},
+  author  = {Nguyen, Thuan Minh and Le, Long Bao},
+  year    = {2026}
 }</code></pre>
         </div>
       </section>
