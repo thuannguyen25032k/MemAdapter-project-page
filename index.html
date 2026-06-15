@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="hero section">
+      <div class="container">
+        <h1>MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning</h1>
+        <p class="authors">Thuan Minh Nguyen and Long Bao Le</p>
+        <p class="meta">Affiliation: <span>To be updated</span> &nbsp;|&nbsp; Venue: <span>To be updated</span></p>
+        <p class="summary">
+          MemAdapter transforms heterogeneous retrieved memories into structured, verifiable, and recovery-aware planning guidance for VLM-based embodied agents.
+        </p>
+        <div class="button-row">
+          <!-- Replace # with the final paper URL -->
+          <a href="#" class="pill-btn">Paper</a>
+          <!-- Replace # with the final code repository URL -->
+          <a href="#" class="pill-btn">Code</a>
+          <!-- Replace # with the final dataset URL -->
+          <a href="#" class="pill-btn">Dataset</a>
+          <!-- Replace # with the final supplementary material URL -->
+          <a href="#" class="pill-btn">Supplementary</a>
+          <!-- Replace # with the final poster URL -->
+          <a href="#" class="pill-btn">Poster</a>
+          <!-- Replace # with the final multimedia materials URL -->
+          <a href="#" class="pill-btn">Multimedia Materials</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="container">
+          <h2>Teaser</h2>
+          <!-- Replace assets/teaser.png with the final teaser image -->
+          <img src="assets/teaser.png" alt="MemAdapter teaser" class="wide-image" />
+          <p class="caption">
+            MemAdapter converts retrieved memories into structured guidance that supports closed-loop embodied planning.
+          </p>
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
+          <h2>Abstract</h2>
+          <p>
+            Memory-augmented VLM planning is promising for long-horizon embodied tasks, but directly injecting raw retrieved memories into a planner can be unreliable because such memories are verbose, heterogeneous, and unstructured. MemAdapter addresses this issue by converting retrieved spatial, temporal, episodic, and semantic memories into structured task-level guidance: a foresight plan, feasibility criteria, and a fallback strategy. This guidance helps the planner sequence long-horizon tasks, allows the critic to verify action feasibility, and supports recovery from failures under partial observability.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Method Overview</h2>
+          <div class="card-grid method-cards">
+            <article class="card">
+              <h3>1. Retrieve Multi-type Memories</h3>
+              <p>Collect spatial, temporal, episodic, and semantic memories relevant to the current instruction.</p>
+            </article>
+            <article class="card">
+              <h3>2. Adapt Memories into Structured Guidance</h3>
+              <p>Generate a foresight plan, feasibility criteria, and a fallback strategy from heterogeneous retrieved memories.</p>
+            </article>
+            <article class="card">
+              <h3>3. Plan, Verify, Execute, and Update Memory</h3>
+              <p>Use guidance for planning and critic verification, execute actions, and update memory for the next decision step.</p>
+            </article>
+          </div>
+          <!-- Replace images/method_overview.png with the final method figure -->
+          <img src="images/method_overview.png" alt="Method overview" class="wide-image" />
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
+          <h2>Multimedia Materials</h2>
+          <div class="card-grid media-grid">
+            <article class="card">
+              <h3>Overview Video</h3>
+              <p>High-level walkthrough of the MemAdapter framework and planning loop.</p>
+              <!-- Replace videos/overview.mp4 with the final overview demo video -->
+              <video controls preload="metadata" src="videos/overview.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Successful Execution Case</h3>
+              <p>Example of robust long-horizon completion with memory-structured guidance.</p>
+              <!-- Replace videos/success_case_1.mp4 with the final success-case demo -->
+              <video controls preload="metadata" src="videos/success_case_1.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Memory-guided Replanning Case</h3>
+              <p>Example where the agent revises action decisions using structured fallback guidance.</p>
+              <!-- Replace videos/replanning_case.mp4 with the final replanning demo -->
+              <video controls preload="metadata" src="videos/replanning_case.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Failure/Recovery Case</h3>
+              <p>Example highlighting feasibility checks and recovery after invalid or failed actions.</p>
+              <!-- Replace videos/failure_case.mp4 with the final failure-recovery demo -->
+              <video controls preload="metadata" src="videos/failure_case.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Results</h2>
+          <div class="card-grid metrics-grid">
+            <article class="metric-card">
+              <p class="metric-value">79.50%</p>
+              <p class="metric-label">Average success rate</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-value">+12.75</p>
+              <p class="metric-label">Points over RoboMemory (same planner)</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-value">+8.75</p>
+              <p class="metric-label">Points over Claude-3.5-Sonnet standalone agent</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-value">400</p>
+              <p class="metric-label">Tasks from EB-ALFRED and EB-Habitat in EmbodiedBench</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
+          <h2>Qualitative Examples</h2>
+          <!-- Replace images/qualitative_results.png with final qualitative results figure -->
+          <img src="images/qualitative_results.png" alt="Qualitative results" class="wide-image" />
+          <ul class="bullet-list">
+            <li><strong>Object search under partial observability:</strong> memory-guided planning narrows plausible search trajectories.</li>
+            <li><strong>Feasibility checking before execution:</strong> critic criteria prevent low-probability or infeasible action commitments.</li>
+            <li><strong>Recovery after invalid or failed actions:</strong> fallback strategy supports robust replanning and task continuation.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <h2>Citation</h2>
+          <pre><code>@inproceedings{nguyen2026memadapter,
+title     = {MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning},
+author    = {Nguyen, Thuan Minh and Le, Long Bao},
+booktitle = {Conference Name},
+year      = {2026}
+}</code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="section footer">
+      <div class="container footer-content">
+        <div class="footer-links">
+          <!-- Replace # with the final paper URL -->
+          <a href="#">Paper</a>
+          <!-- Replace # with the final code URL -->
+          <a href="#">Code</a>
+          <!-- Replace # with the final dataset URL -->
+          <a href="#">Dataset</a>
+          <!-- Replace # with final contact page/form URL -->
+          <a href="#">Contact</a>
+        </div>
+        <p>This website is an academic project page for supplementary multimedia materials.</p>
+      </div>
+    </footer>
+  </body>
+</html>
