@@ -219,3 +219,5 @@ __marimo__/
 
 # Local Claude Code preview helper
 .claude/
+raw_videos.zip
+long_horizon_main
