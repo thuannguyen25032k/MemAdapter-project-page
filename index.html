@@ -130,85 +130,69 @@
             <p class="ts-note">Success rate on the EB-ALFRED Long-Horizon subset &mdash; a <strong>+54-point</strong> jump from the same backbone, landing within 2 points of the prompted GPT-5.1 skyline (74%). The gains come from distilling the memory-to-guidance transformation, not from raw model capacity.</p>
           </div>
 
-          <h3 class="subhead">Memory Adapter Prompt <span class="muted-inline">&mdash; the instruction template used to elicit guidance</span></h3>
+          <h3 class="subhead">Output Schema <span class="muted-inline">&mdash; what the adapter is prompted to produce</span></h3>
           <p class="qual-intro">
-            The system prompt below defines the adapter's task, how it should read each memory type, and the exact XML output schema (<code>FORESIGHT_PLAN</code>, <code>FEASIBILITY_CRITERIA</code>, <code>FALLBACK_STRATEGY</code>). The same template elicits the synthesized training targets and conditions the fine-tuned adapter.
+            MemAdapter reads each memory type and emits exactly three XML-tagged blocks. The skeleton on the left is the output contract; the rules on the right keep each block concise and critic-friendly. The complete prompt, with few-shot examples, ships with the <a href="https://github.com/thuannguyen25032k/MemAdapt" target="_blank" rel="noopener">code release</a>.
           </p>
-          <pre class="prompt-pre"><code>You are a Memory Adapter for an embodied robot planning system. Given a human instruction and retrieved memory, your job is to transform memory into a global foresight plan, feasibility criteria, and a fallback strategy for a household task.
-
-Memory sources:
-- [Spatial Memory]: relevant receptacle/object names and their relations in the environment.
-- [Episodic Memory]: similar successful episodes. Use to infer probable object locations and effective action sequences.
-- [Semantic Memory]: commonsense knowledge about action preconditions, and failure patterns.
-
-When generating FORESIGHT_PLAN, you MUST:
-- First, parse the human instruction to identify the target object(s), the destination, the final condition (if any), and the main task.
-- Consider the similar successful episodes and then generate an ordered list of steps to complete the task.
-- Use [Episodic Memory] and [Spatial Memory] to determine the location where the target object is most likely to be and visit that location first.
-- For multi-object or "all/every" tasks, plan to handle each possible instance sequentially.
-- Example 1: Human instruction is "Find all oranges and move them to the right counter."
-    Step 1: Navigate to the table 1.
-    Step 2: Pick up the orange.
-    Step 3: Navigate to the right counter.
-    Step 4: Place at the right counter.
-    Step 5: Navigate to the right drawer of the kitchen counter.
-    Step 6: Open the right drawer of the kitchen counter.
-    Step 7: Pick up the orange.
-    Step 8: Navigate to the right counter.
-    Step 9: Place at the right counter.
-    Step 10: Navigate to the refrigerator.
-    Step 11: Open the refrigerator.
-    Step 12: Pick up the orange.
-    Step 13: Navigate to the right counter.
-    Step 14: Place at the right counter.
-- Example 2: Human instruction is "Put a clean slice of lettuce on to the counter."
-    Step 1: Find a Lettuce (navigate to where it is located per spatial memory).
-    Step 2: Pick up the Lettuce.
-    Step 3: Find a Sink.
-    Step 4: Turn on Faucet (wash the lettuce).
-    Step 5: Put down the object in hand (place Lettuce in Sink under running water).
-    Step 6: Turn off Faucet.
-    Step 7: Pick up the Lettuce (now clean).
-    Step 8: Find a CounterTop (choose a stable surface for slicing).
-    Step 9: Put down the object in hand (Lettuce must be on a surface to be sliced, NOT held).
-    Step 10: Find a Knife (navigate to the knife; robot will move away from lettuce).
-    Step 11: Pick up the Knife.
-    Step 12: Find the Lettuce (CRITICAL: navigate BACK to the lettuce with the knife in hand before slicing).
-    Step 13: Slice the Lettuce (robot is now close to the lettuce on the surface, holding the knife).
-    Step 14: Find Lettuce (find the lettuce slice on the surface).
-    Step 15: Pick up the Lettuce (pick up the slice).
-    Step 16: Find CounterTop (navigate to the destination counter).
-    Step 17: Put down the object in hand (place the clean lettuce slice on the counter).
-
-When generating FEASIBILITY_CRITERIA, you MUST:
-- List the 1-4 key preconditions that the VLM_critic must check before interaction actions, such as "pick", "place", "open", "close", "turn on", "turn off", "slice", etc. You do not need to provide preconditions for navigation actions, such as "find" or "navigate."
-- Format each entry as: "&lt;sub-task&gt;": &lt;condition to check&gt;.
-
-When generating FALLBACK_STRATEGY, you MUST:
-- Derive the most likely invalid actions from [Episodic Memory] and [Semantic Memory].
-- List 1-4 recovery actions for each likely invalid action of THIS specific task.
-- Each bullet starts with: If "&lt;invalid condition&gt;": &lt;recovery action&gt;.
-Example:
-    If "cannot pick / not near": navigate to sofa, then retry pick. If still failing, navigate to refrigerator push point, then retry pick. If still failing, navigate to cabinet 4, then retry pick. If still failing, navigate to chair 1, then retry pick. If still failing, navigate to cabinet 7, then retry pick. If still failing, navigate to table 2, then retry pick. If still failing, navigate to left counter in the kitchen, then retry pick. If still failing, navigate to right drawer of the kitchen counter, then retry pick. If still failing, navigate to table 1, then retry pick. If still failing, navigate to sink in the kitchen, then retry pick.
-- Use names from [Spatial Memory]. No vague words like "nearest receptacle" or "the source"
-
-Output EXACTLY these XML tags, in order, one bullet per line:
-
-&lt;FORESIGHT_PLAN&gt;
-- ...
+          <div class="schema-grid">
+            <pre class="schema-pre"><code>&lt;FORESIGHT_PLAN&gt;
+- Step 1: ...
+- Step 2: ...
 &lt;/FORESIGHT_PLAN&gt;
 
 &lt;FEASIBILITY_CRITERIA&gt;
-- ...
+- "&lt;sub-task&gt;": &lt;condition&gt;
 &lt;/FEASIBILITY_CRITERIA&gt;
 
 &lt;FALLBACK_STRATEGY&gt;
-- ...
+- If "&lt;failure&gt;": &lt;recovery&gt;
 &lt;/FALLBACK_STRATEGY&gt;</code></pre>
+            <ul class="schema-rules">
+              <li><strong>FORESIGHT_PLAN</strong> &mdash; parse the instruction (target object, destination, final condition), then emit an ordered, location-first action sequence inferred from episodic and spatial memory.</li>
+              <li><strong>FEASIBILITY_CRITERIA</strong> &mdash; 1&ndash;4 preconditions per interaction action (pick, place, open, slice&hellip;) for the critic to verify; navigation actions are skipped.</li>
+              <li><strong>FALLBACK_STRATEGY</strong> &mdash; 1&ndash;4 recovery actions per likely failure, grounded in concrete receptacle names from spatial memory rather than vague references.</li>
+            </ul>
+          </div>
         </div>
       </section>
 
       <section class="section section-alt">
+        <div class="container">
+          <h2>Multimedia Materials</h2>
+          <div class="card-grid media-grid">
+            <article class="card">
+              <h3>Overview Video</h3>
+              <p>High-level walkthrough of the MemAdapter framework and planning loop.</p>
+              <!-- Replace videos/overview.mp4 with the final overview demo video -->
+              <video controls preload="metadata" src="videos/overview.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Successful Execution Case</h3>
+              <p>Example of robust long-horizon completion with memory-structured guidance.</p>
+              <!-- Replace videos/success_case_1.mp4 with the final success-case demo -->
+              <video controls preload="metadata" src="videos/success_case_1.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Memory-guided Replanning Case</h3>
+              <p>Example where the agent revises action decisions using structured fallback guidance.</p>
+              <!-- Replace videos/replanning_case.mp4 with the final replanning demo -->
+              <video controls preload="metadata" src="videos/replanning_case.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+            <article class="card">
+              <h3>Failure/Recovery Case</h3>
+              <p>Example highlighting feasibility checks and recovery after invalid or failed actions.</p>
+              <!-- Replace videos/failure_case.mp4 with the final failure-recovery demo -->
+              <video controls preload="metadata" src="videos/failure_case.mp4"></video>
+              <p class="note">Replace this placeholder video with the final demo.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
         <div class="container">
           <h2>Results</h2>
           <div class="card-grid metrics-grid">
@@ -366,7 +350,7 @@ Output EXACTLY these XML tags, in order, one bullet per line:
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section-alt">
         <div class="container">
           <h2>Qualitative Example</h2>
           <p class="qual-intro">
@@ -502,7 +486,7 @@ Instruction: "Heat a piece of apple and place it in the fridge"
         </div>
       </section>
 
-      <section class="section section-alt">
+      <section class="section">
         <div class="container">
           <h2>Citation</h2>
           <pre><code>@article{nguyen2026memadapter,

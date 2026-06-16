@@ -258,13 +258,48 @@ pre {
   min-width: 220px;
 }
 
-.prompt-pre {
-  max-height: 520px;
-  overflow: auto;
-  font-size: 0.78rem;
+.schema-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) 1.1fr;
+  gap: 1.25rem;
+  align-items: start;
+  margin-top: 0.6rem;
+}
+
+.schema-pre {
+  margin: 0;
+  font-size: 0.8rem;
   line-height: 1.55;
-  white-space: pre-wrap;
-  margin-top: 0.5rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.schema-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.schema-rules li {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.schema-rules li:last-child {
+  border-bottom: none;
+}
+
+.schema-rules strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .schema-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 p code {
