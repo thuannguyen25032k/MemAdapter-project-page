@@ -18,16 +18,10 @@
         <div class="button-row">
           <!-- Replace # with the final paper URL -->
           <a href="#" class="pill-btn">Paper</a>
-          <!-- Replace # with the final code repository URL -->
-          <a href="#" class="pill-btn">Code</a>
-          <!-- Replace # with the final dataset URL -->
-          <a href="#" class="pill-btn">Dataset</a>
-          <!-- Replace # with the final supplementary material URL -->
-          <a href="#" class="pill-btn">Supplementary</a>
+          <a href="https://github.com/thuannguyen25032k/MemAdapt" class="pill-btn" target="_blank" rel="noopener">Code</a>
+          <a href="https://huggingface.co/datasets/NMThuan032k/MemGuide" class="pill-btn" target="_blank" rel="noopener">Dataset</a>
           <!-- Replace # with the final poster URL -->
           <a href="#" class="pill-btn">Poster</a>
-          <!-- Replace # with the final multimedia materials URL -->
-          <a href="#" class="pill-btn">Multimedia Materials</a>
         </div>
       </div>
     </header>
@@ -63,7 +57,7 @@
             <li><strong>MemAdapter:</strong> a plug-and-play module between memory retrieval and the VLM planner that converts heterogeneous retrieved memories (spatial, temporal, episodic, and semantic) into structured planning guidance without modifying either component.</li>
             <li><strong>A structured guidance format</strong> with three components, each targeting a distinct stage of closed-loop planning: a <em>foresight plan</em>, <em>feasibility criteria</em> for the critic, and a <em>fallback strategy</em> for recovery.</li>
             <li><strong>An automated fine-tuning pipeline</strong> that needs no manual annotation: a frontier LLM synthesizes expert guidance targets, behavioral consensus filtering discards targets that degrade closed-loop execution, and supervised fine-tuning distills the rest into MemAdapter.</li>
-            <li><strong>MemGuide:</strong> a memory-to-guidance dataset pairing task instructions and retrieved memories with their structured planning guidance, released to support future research.</li>
+            <li><strong><a href="https://huggingface.co/datasets/NMThuan032k/MemGuide" target="_blank" rel="noopener">MemGuide</a>:</strong> a memory-to-guidance dataset pairing task instructions and retrieved memories with their structured planning guidance, released to support future research.</li>
           </ul>
         </div>
       </section>
@@ -109,37 +103,108 @@
 
       <section class="section">
         <div class="container">
-          <h2>Multimedia Materials</h2>
-          <div class="card-grid media-grid">
+          <h2>Training MemAdapter</h2>
+          <p class="qual-intro">
+            A compact LLM cannot produce reliable structured guidance zero-shot, yet manually annotating guidance for household tasks is costly. We therefore train MemAdapter with an <strong>automated pipeline that needs no manual annotation</strong>: a frontier LLM synthesizes expert guidance, behavioral consensus filtering removes targets that hurt execution, and supervised fine-tuning distills the rest into a compact 14B adapter.
+          </p>
+
+          <div class="card-grid method-cards">
             <article class="card">
-              <h3>Overview Video</h3>
-              <p>High-level walkthrough of the MemAdapter framework and planning loop.</p>
-              <!-- Replace videos/overview.mp4 with the final overview demo video -->
-              <video controls preload="metadata" src="videos/overview.mp4"></video>
-              <p class="note">Replace this placeholder video with the final demo.</p>
+              <h3>1. Synthesize <span class="tag">GPT-5.1</span></h3>
+              <p>For each <em>(instruction, retrieved-memory)</em> pair, a frontier LLM generates an expert-style target G&#8902; = {P&#8902;, C&#8902;, F&#8902;}. Conditioning on retrieved object locations, episodes, and rules keeps targets memory-grounded rather than generic.</p>
             </article>
             <article class="card">
-              <h3>Successful Execution Case</h3>
-              <p>Example of robust long-horizon completion with memory-structured guidance.</p>
-              <!-- Replace videos/success_case_1.mp4 with the final success-case demo -->
-              <video controls preload="metadata" src="videos/success_case_1.mp4"></video>
-              <p class="note">Replace this placeholder video with the final demo.</p>
+              <h3>2. Filter <span class="tag">Consensus</span></h3>
+              <p><strong>Behavioral consensus filtering:</strong> an expert and a novice planner each run the task with and without the candidate guidance. A target is kept only if it does not lower goal-condition completion for <em>either</em> planner &mdash; discarding guidance that degrades closed-loop execution.</p>
             </article>
             <article class="card">
-              <h3>Memory-guided Replanning Case</h3>
-              <p>Example where the agent revises action decisions using structured fallback guidance.</p>
-              <!-- Replace videos/replanning_case.mp4 with the final replanning demo -->
-              <video controls preload="metadata" src="videos/replanning_case.mp4"></video>
-              <p class="note">Replace this placeholder video with the final demo.</p>
-            </article>
-            <article class="card">
-              <h3>Failure/Recovery Case</h3>
-              <p>Example highlighting feasibility checks and recovery after invalid or failed actions.</p>
-              <!-- Replace videos/failure_case.mp4 with the final failure-recovery demo -->
-              <video controls preload="metadata" src="videos/failure_case.mp4"></video>
-              <p class="note">Replace this placeholder video with the final demo.</p>
+              <h3>3. Distill <span class="tag">SFT</span></h3>
+              <p>The filtered <strong><a href="https://huggingface.co/datasets/NMThuan032k/MemGuide" target="_blank" rel="noopener">MemGuide</a></strong> data is distilled into a compact <strong>Qwen3-14B</strong> adapter via supervised fine-tuning, training it to map (instruction, memory) to structured, memory-grounded guidance.</p>
             </article>
           </div>
+
+          <div class="train-stat">
+            <div class="ts-item"><span class="big">18%</span><span class="ts-label">prompted<br />Qwen3-14B</span></div>
+            <span class="ts-arrow">&rarr;</span>
+            <div class="ts-item"><span class="big">72%</span><span class="ts-label">after SFT<br />(ours)</span></div>
+            <p class="ts-note">Success rate on the EB-ALFRED Long-Horizon subset &mdash; a <strong>+54-point</strong> jump from the same backbone, landing within 2 points of the prompted GPT-5.1 skyline (74%). The gains come from distilling the memory-to-guidance transformation, not from raw model capacity.</p>
+          </div>
+
+          <h3 class="subhead">Memory Adapter Prompt <span class="muted-inline">&mdash; the instruction template used to elicit guidance</span></h3>
+          <p class="qual-intro">
+            The system prompt below defines the adapter's task, how it should read each memory type, and the exact XML output schema (<code>FORESIGHT_PLAN</code>, <code>FEASIBILITY_CRITERIA</code>, <code>FALLBACK_STRATEGY</code>). The same template elicits the synthesized training targets and conditions the fine-tuned adapter.
+          </p>
+          <pre class="prompt-pre"><code>You are a Memory Adapter for an embodied robot planning system. Given a human instruction and retrieved memory, your job is to transform memory into a global foresight plan, feasibility criteria, and a fallback strategy for a household task.
+
+Memory sources:
+- [Spatial Memory]: relevant receptacle/object names and their relations in the environment.
+- [Episodic Memory]: similar successful episodes. Use to infer probable object locations and effective action sequences.
+- [Semantic Memory]: commonsense knowledge about action preconditions, and failure patterns.
+
+When generating FORESIGHT_PLAN, you MUST:
+- First, parse the human instruction to identify the target object(s), the destination, the final condition (if any), and the main task.
+- Consider the similar successful episodes and then generate an ordered list of steps to complete the task.
+- Use [Episodic Memory] and [Spatial Memory] to determine the location where the target object is most likely to be and visit that location first.
+- For multi-object or "all/every" tasks, plan to handle each possible instance sequentially.
+- Example 1: Human instruction is "Find all oranges and move them to the right counter."
+    Step 1: Navigate to the table 1.
+    Step 2: Pick up the orange.
+    Step 3: Navigate to the right counter.
+    Step 4: Place at the right counter.
+    Step 5: Navigate to the right drawer of the kitchen counter.
+    Step 6: Open the right drawer of the kitchen counter.
+    Step 7: Pick up the orange.
+    Step 8: Navigate to the right counter.
+    Step 9: Place at the right counter.
+    Step 10: Navigate to the refrigerator.
+    Step 11: Open the refrigerator.
+    Step 12: Pick up the orange.
+    Step 13: Navigate to the right counter.
+    Step 14: Place at the right counter.
+- Example 2: Human instruction is "Put a clean slice of lettuce on to the counter."
+    Step 1: Find a Lettuce (navigate to where it is located per spatial memory).
+    Step 2: Pick up the Lettuce.
+    Step 3: Find a Sink.
+    Step 4: Turn on Faucet (wash the lettuce).
+    Step 5: Put down the object in hand (place Lettuce in Sink under running water).
+    Step 6: Turn off Faucet.
+    Step 7: Pick up the Lettuce (now clean).
+    Step 8: Find a CounterTop (choose a stable surface for slicing).
+    Step 9: Put down the object in hand (Lettuce must be on a surface to be sliced, NOT held).
+    Step 10: Find a Knife (navigate to the knife; robot will move away from lettuce).
+    Step 11: Pick up the Knife.
+    Step 12: Find the Lettuce (CRITICAL: navigate BACK to the lettuce with the knife in hand before slicing).
+    Step 13: Slice the Lettuce (robot is now close to the lettuce on the surface, holding the knife).
+    Step 14: Find Lettuce (find the lettuce slice on the surface).
+    Step 15: Pick up the Lettuce (pick up the slice).
+    Step 16: Find CounterTop (navigate to the destination counter).
+    Step 17: Put down the object in hand (place the clean lettuce slice on the counter).
+
+When generating FEASIBILITY_CRITERIA, you MUST:
+- List the 1-4 key preconditions that the VLM_critic must check before interaction actions, such as "pick", "place", "open", "close", "turn on", "turn off", "slice", etc. You do not need to provide preconditions for navigation actions, such as "find" or "navigate."
+- Format each entry as: "&lt;sub-task&gt;": &lt;condition to check&gt;.
+
+When generating FALLBACK_STRATEGY, you MUST:
+- Derive the most likely invalid actions from [Episodic Memory] and [Semantic Memory].
+- List 1-4 recovery actions for each likely invalid action of THIS specific task.
+- Each bullet starts with: If "&lt;invalid condition&gt;": &lt;recovery action&gt;.
+Example:
+    If "cannot pick / not near": navigate to sofa, then retry pick. If still failing, navigate to refrigerator push point, then retry pick. If still failing, navigate to cabinet 4, then retry pick. If still failing, navigate to chair 1, then retry pick. If still failing, navigate to cabinet 7, then retry pick. If still failing, navigate to table 2, then retry pick. If still failing, navigate to left counter in the kitchen, then retry pick. If still failing, navigate to right drawer of the kitchen counter, then retry pick. If still failing, navigate to table 1, then retry pick. If still failing, navigate to sink in the kitchen, then retry pick.
+- Use names from [Spatial Memory]. No vague words like "nearest receptacle" or "the source"
+
+Output EXACTLY these XML tags, in order, one bullet per line:
+
+&lt;FORESIGHT_PLAN&gt;
+- ...
+&lt;/FORESIGHT_PLAN&gt;
+
+&lt;FEASIBILITY_CRITERIA&gt;
+- ...
+&lt;/FEASIBILITY_CRITERIA&gt;
+
+&lt;FALLBACK_STRATEGY&gt;
+- ...
+&lt;/FALLBACK_STRATEGY&gt;</code></pre>
         </div>
       </section>
 
@@ -164,19 +229,276 @@
               <p class="metric-label">Tasks from EB-ALFRED and EB-Habitat in EmbodiedBench</p>
             </article>
           </div>
+
+          <h3 class="subhead">Success Rate by Difficulty Level <span class="muted-inline">&mdash; EB-ALFRED &amp; EB-Habitat (SR %)</span></h3>
+          <div class="table-wrap">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th class="method" rowspan="2">Method</th>
+                  <th class="col-sep" rowspan="2">Average</th>
+                  <th class="col-sep" colspan="4">EB-ALFRED</th>
+                  <th class="col-sep" colspan="4">EB-Habitat</th>
+                </tr>
+                <tr>
+                  <th class="col-sep">Base</th>
+                  <th>Common</th>
+                  <th>Complex</th>
+                  <th>Long</th>
+                  <th class="col-sep">Base</th>
+                  <th>Common</th>
+                  <th>Complex</th>
+                  <th>Long</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="group-row"><td colspan="10">Standalone closed-source VLM agents</td></tr>
+                <tr>
+                  <td class="method">GPT-4o</td>
+                  <td class="avg col-sep">61.25</td>
+                  <td class="col-sep">64.0</td><td>54.0</td><td>68.0</td><td>54.0</td>
+                  <td class="col-sep">86.0</td><td>44.0</td><td>56.0</td><td><u>64.0</u></td>
+                </tr>
+                <tr>
+                  <td class="method">Claude-3.7-Sonnet</td>
+                  <td class="avg col-sep">66.00</td>
+                  <td class="col-sep">68.0</td><td>68.0</td><td>70.0</td><td><u>70.0</u></td>
+                  <td class="col-sep">90.0</td><td>58.0</td><td>58.0</td><td>46.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Claude-3.5-Sonnet</td>
+                  <td class="avg col-sep"><u>70.75</u></td>
+                  <td class="col-sep"><u>72.0</u></td><td>66.0</td><td><u>76.0</u></td><td>52.0</td>
+                  <td class="col-sep"><strong>96.0</strong></td><td><u>68.0</u></td><td><u>78.0</u></td><td>58.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Gemini-1.5-Pro</td>
+                  <td class="avg col-sep">63.50</td>
+                  <td class="col-sep">70.0</td><td>64.0</td><td>72.0</td><td>58.0</td>
+                  <td class="col-sep">92.0</td><td>52.0</td><td>48.0</td><td>52.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Gemini-2.0-Flash</td>
+                  <td class="avg col-sep">50.75</td>
+                  <td class="col-sep">62.0</td><td>48.0</td><td>54.0</td><td>58.0</td>
+                  <td class="col-sep">82.0</td><td>38.0</td><td>38.0</td><td>26.0</td>
+                </tr>
+
+                <tr class="group-row"><td colspan="10">Standalone open-source VLM agents</td></tr>
+                <tr>
+                  <td class="method">Llama-3.2-90B-Vision-Ins</td>
+                  <td class="avg col-sep">39.25</td>
+                  <td class="col-sep">38.0</td><td>34.0</td><td>44.0</td><td>16.0</td>
+                  <td class="col-sep"><u>94.0</u></td><td>24.0</td><td>50.0</td><td>14.0</td>
+                </tr>
+                <tr>
+                  <td class="method">InternVL2.5-78B</td>
+                  <td class="avg col-sep">45.25</td>
+                  <td class="col-sep">38.0</td><td>34.0</td><td>42.0</td><td>42.0</td>
+                  <td class="col-sep">80.0</td><td>42.0</td><td>56.0</td><td>28.0</td>
+                </tr>
+                <tr>
+                  <td class="method">InternVL3-78B</td>
+                  <td class="avg col-sep">51.25</td>
+                  <td class="col-sep">42.0</td><td>34.0</td><td>48.0</td><td>44.0</td>
+                  <td class="col-sep">84.0</td><td>58.0</td><td>60.0</td><td>40.0</td>
+                </tr>
+                <tr>
+                  <td class="method">InternVL3.5-38B</td>
+                  <td class="avg col-sep">43.0</td>
+                  <td class="col-sep">54.0</td><td>38.0</td><td>48.0</td><td>28.0</td>
+                  <td class="col-sep">76.0</td><td>38.0</td><td>40.0</td><td>22.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Qwen2.5-VL-72B-Ins</td>
+                  <td class="avg col-sep">41.25</td>
+                  <td class="col-sep">50.0</td><td>42.0</td><td>42.0</td><td>34.0</td>
+                  <td class="col-sep">74.0</td><td>28.0</td><td>42.0</td><td>18.0</td>
+                </tr>
+
+                <tr class="group-row"><td colspan="10">VLM-agent frameworks</td></tr>
+                <tr>
+                  <td class="method">Voyager (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep">44.75</td>
+                  <td class="col-sep">56.0</td><td>46.0</td><td>40.0</td><td>32.0</td>
+                  <td class="col-sep">76.0</td><td>38.0</td><td>50.0</td><td>22.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Reflexion (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep">38.38</td>
+                  <td class="col-sep">48.0</td><td>32.0</td><td>44.0</td><td>10.0</td>
+                  <td class="col-sep">80.0</td><td>36.0</td><td>42.0</td><td>15.0</td>
+                </tr>
+                <tr>
+                  <td class="method">Cradle (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep">40.5</td>
+                  <td class="col-sep">54.0</td><td>40.0</td><td>44.0</td><td>32.0</td>
+                  <td class="col-sep">62.0</td><td>24.0</td><td>38.0</td><td>30.0</td>
+                </tr>
+                <tr>
+                  <td class="method">RoboOS (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep">27.75</td>
+                  <td class="col-sep">32.0</td><td>26.0</td><td>38.0</td><td>12.0</td>
+                  <td class="col-sep">38.0</td><td>26.0</td><td>30.0</td><td>20.0</td>
+                </tr>
+                <tr>
+                  <td class="method">RoboOS (RoboBrain2-32B)</td>
+                  <td class="avg col-sep">18.50</td>
+                  <td class="col-sep">32.0</td><td>20.0</td><td>22.0</td><td>8.0</td>
+                  <td class="col-sep">28.0</td><td>10.0</td><td>24.0</td><td>12.0</td>
+                </tr>
+                <tr>
+                  <td class="method">RoboMemory (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep">66.75</td>
+                  <td class="col-sep">68.0</td><td><u>70.0</u></td><td>64.0</td><td>66.0</td>
+                  <td class="col-sep">86.0</td><td>56.0</td><td>62.0</td><td>62.0</td>
+                </tr>
+                <tr class="ours-row">
+                  <td class="method">Ours (Qwen2.5-VL-72B-Ins)</td>
+                  <td class="avg col-sep"><strong>79.50</strong></td>
+                  <td class="col-sep"><strong>78.0</strong></td><td><strong>78.0</strong></td><td><strong>82.0</strong></td><td><strong>72.0</strong></td>
+                  <td class="col-sep"><strong>96.0</strong></td><td><strong>84.0</strong></td><td><strong>80.0</strong></td><td><strong>66.0</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-legend"><strong>Bold</strong> = best per column, <u>underline</u> = second best. All agent-framework baselines use Qwen2.5-VL-72B-Instruct as the planner (temperature 0); RoboOS additionally uses its purpose-built RoboBrain2-32B backbone.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="container">
-          <h2>Qualitative Examples</h2>
-          <!-- Replace images/qualitative_results.png with final qualitative results figure -->
-          <img src="images/qualitative_results.png" alt="Qualitative results" class="wide-image" />
-          <ul class="bullet-list">
-            <li><strong>Object search under partial observability:</strong> memory-guided planning narrows plausible search trajectories.</li>
-            <li><strong>Feasibility checking before execution:</strong> critic criteria prevent low-probability or infeasible action commitments.</li>
-            <li><strong>Recovery after invalid or failed actions:</strong> fallback strategy supports robust replanning and task continuation.</li>
-          </ul>
+          <h2>Qualitative Example</h2>
+          <p class="qual-intro">
+            A single closed-loop case from EB-ALFRED shows MemAdapter at work: it reads verbose, heterogeneous retrieved memory and distills it into a <strong>foresight plan</strong>, <strong>feasibility criteria</strong>, and a <strong>fallback strategy</strong> &mdash; resolving an ambiguous instruction and preempting an action failure that recurs across the retrieved episodes.
+          </p>
+
+          <div class="qual-task">
+            <div class="chip-row">
+              <span class="chip">EB-ALFRED</span>
+              <span class="chip">EmbodiedBench</span>
+              <span class="chip">Heat &amp; place</span>
+            </div>
+            <p class="instruction">Instruction: <span class="quote">&ldquo;Heat a bread slice and put it on the table by the spoon.&rdquo;</span></p>
+          </div>
+
+          <details class="raw-memory">
+            <summary>
+              Retrieved memory (raw input to MemAdapter)
+              <span class="summary-tag">verbose &middot; heterogeneous &middot; contains recurring failures</span>
+            </summary>
+            <pre class="mem-block"><span class="mem-head">[Spatial Memory]</span>
+Spoon in DiningTable    Bread in DiningTable_2    Plate in DiningTable
+Toaster in DiningTable    Mug in Microwave    ButterKnife in Drawer
+DiningTable_2 contains Bread, ButterKnife_3, PepperShaker, Pot_2 ...
+
+<span class="mem-head">[Episodic Memory]</span>  (similar past episodes, retrieved)
+Instruction: "Place a hot bread slice on the table"
+ Step 4: pick up the Bread.    <span class="fail">-> INVALID: robot is holding Knife. Put it down first.</span>
+ Step 5: drop the held object. <span class="ok">-> success</span>
+ ...
+ Step 18: find a DiningTable.  <span class="ok">-> near DiningTable</span>
+ Step 19: put down object.     <span class="ok">-> placed on DiningTable (success)</span>
+
+Instruction: "Heat a piece of apple and place it in the fridge"
+ Step 4: pick up the Apple.    <span class="fail">-> INVALID: robot is holding Knife. Put it down first.</span>
+ ...  (gripper-conflict failures recur across these heat-and-place episodes)
+
+<span class="mem-head">[Semantic Memory]</span>
+- [precondition] To heat a bread slice, it must be placed inside the microwave before turning it on.
+- [task_rule] A hot bread slice can be placed on a table after being heated in a microwave.
+- [affordance] A spoon can be picked up and placed on a dining table.</pre>
+          </details>
+
+          <div class="transform">
+            <span class="arrow">&darr;</span> MemAdapter <span class="arrow">&darr;</span>
+          </div>
+
+          <h3 class="subhead">Foresight Plan <span class="tag">P</span> <span class="muted-inline">&mdash; a 21-step task hypothesis, grouped into three phases</span></h3>
+          <div class="phase-grid">
+            <article class="phase">
+              <h4>1. Slice the bread</h4>
+              <p class="phase-sub">Steps 1&ndash;8</p>
+              <ol class="step-list">
+                <li>Find &amp; pick up the Knife</li>
+                <li>Find Bread (in DiningTable_2)</li>
+                <li>Slice the Bread</li>
+                <li>Find a CounterTop</li>
+                <li class="key">Put the Knife down to free the gripper</li>
+                <li>Find &amp; pick up the bread slice</li>
+              </ol>
+            </article>
+            <article class="phase">
+              <h4>2. Heat in the microwave</h4>
+              <p class="phase-sub">Steps 9&ndash;18</p>
+              <ol class="step-list">
+                <li>Find the Microwave, open it</li>
+                <li>Place the slice inside, close</li>
+                <li>Turn on, then turn off</li>
+                <li>Open, pick up the heated slice</li>
+                <li>Close the Microwave</li>
+              </ol>
+            </article>
+            <article class="phase">
+              <h4>3. Serve by the spoon</h4>
+              <p class="phase-sub">Steps 19&ndash;21</p>
+              <ol class="step-list">
+                <li>Find the DiningTable (where the Spoon is)</li>
+                <li>Locate the Spoon</li>
+                <li class="key">Place the slice on the DiningTable <em>near</em> the Spoon</li>
+              </ol>
+            </article>
+          </div>
+
+          <div class="two-col">
+            <article class="gcard">
+              <h4>Feasibility Criteria <span class="tag">C</span></h4>
+              <p class="gcard-sub">Per-action preconditions the critic checks before execution.</p>
+              <ul class="crit-list">
+                <li><span class="act">pick up Knife / Bread</span> &mdash; object visible, reachable, and the gripper is empty.</li>
+                <li><span class="act">slice the Bread</span> &mdash; robot holds a Knife and is near an un-held Bread.</li>
+                <li><span class="act">open / close Microwave</span> &mdash; robot is near it and the door is in the opposite state.</li>
+                <li><span class="act">turn on Microwave</span> &mdash; door is closed and the appliance is operable.</li>
+                <li><span class="act">place near Spoon</span> &mdash; near DiningTable, holding the slice, with clear space by the Spoon.</li>
+              </ul>
+            </article>
+            <article class="gcard">
+              <h4>Fallback Strategy <span class="tag">F</span></h4>
+              <p class="gcard-sub">Recovery actions triggered on rejection or failure.</p>
+              <ul class="fallback-list">
+                <li>If <span class="cond">can't pick Bread (holding Knife)</span>: find a CounterTop, put the held object down, then retry the pick.</li>
+                <li>If <span class="cond">Microwave already open</span>: skip opening and place the slice directly.</li>
+                <li>If <span class="cond">can't place near the Spoon</span>: re-find the DiningTable and retry; otherwise fall back to the CounterTop.</li>
+                <li>If <span class="cond">Spoon not found</span>: place the slice on the DiningTable, then visually search for the Spoon.</li>
+                <li>
+                  <details>
+                    <summary>+ 5 more task-specific recovery rules</summary>
+                    <ul class="fallback-list" style="margin-top:0.5rem">
+                      <li>If <span class="cond">can't slice the Bread</span>: re-acquire the Knife, re-approach the Bread, then retry.</li>
+                      <li>If <span class="cond">can't pick the Knife</span>: clear the gripper at a CounterTop, then retry.</li>
+                      <li>If <span class="cond">place into Microwave fails</span>: verify it is open; else open and retry, or stage on a CounterTop.</li>
+                      <li>If <span class="cond">Microwave already closed</span>: skip closing and turn it on.</li>
+                      <li>If <span class="cond">turn-on fails</span>: ensure the door is closed and retry; else proceed to serving.</li>
+                    </ul>
+                  </details>
+                </li>
+              </ul>
+            </article>
+          </div>
+
+          <h3 class="subhead">Why this guidance wins <span class="muted-inline">&mdash; two failures it preempts</span></h3>
+          <div class="insight-grid">
+            <article class="insight-card">
+              <h4>Disambiguates &ldquo;by the spoon&rdquo;</h4>
+              <p>&ldquo;By the spoon&rdquo; is ambiguous, and a Spoon is not a valid surface. Using spatial memory (the Spoon sits on the DiningTable) and semantic rules, MemAdapter grounds it as <em>near</em> the spoon, placing the slice on the DiningTable.</p>
+              <span class="vs"><span class="bad">Naive:</span> stack bread on the Spoon &rarr; invalid receptacle &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Guided:</strong> place on DiningTable near the Spoon &rarr; success</span>
+            </article>
+            <article class="insight-card">
+              <h4>Avoids the gripper conflict</h4>
+              <p>Past episodes fail with &ldquo;can't pick Bread &mdash; robot is holding Knife.&rdquo; The foresight plan proactively puts the Knife down (Step 6) before picking up the slice, and the fallback re-clears the gripper if it ever recurs.</p>
+              <span class="vs"><span class="bad">Raw memory:</span> pick Bread while holding Knife &rarr; INVALID &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Guided:</strong> put Knife down first &rarr; success</span>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -197,10 +519,8 @@
         <div class="footer-links">
           <!-- Replace # with the final paper URL -->
           <a href="#">Paper</a>
-          <!-- Replace # with the final code URL -->
-          <a href="#">Code</a>
-          <!-- Replace # with the final dataset URL -->
-          <a href="#">Dataset</a>
+          <a href="https://github.com/thuannguyen25032k/MemAdapt" target="_blank" rel="noopener">Code</a>
+          <a href="https://huggingface.co/datasets/NMThuan032k/MemGuide" target="_blank" rel="noopener">Dataset</a>
           <!-- Replace # with final contact page/form URL -->
           <a href="#">Contact</a>
         </div>
