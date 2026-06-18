@@ -312,6 +312,67 @@ p code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* ===== Implementation details ===== */
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.6rem;
+}
+
+.spec-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 1rem 1.2rem;
+}
+
+.spec-group > h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.spec-list {
+  margin: 0;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.spec-row:first-child {
+  border-top: none;
+}
+
+.spec-row dt {
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.spec-row dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+
+.spec-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.02rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
 /* ===== Results table ===== */
 .table-wrap {
   margin: 1.5rem 0 0.6rem;
@@ -704,5 +765,124 @@ main a:not(.pill-btn) {
 
   .card {
     padding: 0.9rem;
+  }
+}
+
+/* ===== Implementation Details ===== */
+.impl-lead {
+  max-width: 820px;
+  margin-bottom: 0.5rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.control {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--bg);
+  padding: 1.3rem 1.1rem 1.1rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.control:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.control-num {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.85rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(29, 78, 216, 0.1);
+}
+
+.control h3 {
+  font-size: 1.02rem;
+  margin: 0 0 0.4rem;
+}
+
+.control p {
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.control-rules {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  background: rgba(29, 78, 216, 0.07);
+  border-radius: 999px;
+  padding: 0.22rem 0.65rem;
+}
+
+.mem-flow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.mf-step {
+  flex: 1 1 200px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 0.9rem 1rem;
+}
+
+.mf-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.mf-step h4 {
+  margin: 0.25rem 0 0.35rem;
+  font-size: 1rem;
+}
+
+.mf-step p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.mf-arrow {
+  align-self: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+.impl-note {
+  font-size: 0.86rem;
+  color: var(--muted);
+  border-left: 3px solid var(--good-border);
+  background: var(--good-bg);
+  border-radius: 0 8px 8px 0;
+  padding: 0.6rem 0.9rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 620px) {
+  .mf-arrow {
+    transform: rotate(90deg);
   }
 }

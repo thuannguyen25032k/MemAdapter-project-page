@@ -484,6 +484,92 @@ Instruction: "Heat a piece of apple and place it in the fridge"
 
       <section class="section">
         <div class="container">
+          <h2>Implementation Details</h2>
+          <p class="impl-lead">
+            Our setup is designed for a fair comparison, not a favorable one. By controlling for model capacity, memory access, and evaluation protocol, we isolate the impact of memory-structured guidance and ensure that any performance gains come from the quality of the guidance itself rather than confounding factors.
+          </p>
+          <div class="controls">
+            <article class="control">
+              <span class="control-num">01</span>
+              <h3>Only the adapter is trained</h3>
+              <p>The planner and critic stay <strong>frozen</strong>; the lone trainable component is a <strong>LoRA-tuned Qwen3-14B</strong> adapter on a single node.</p>
+              <span class="control-rules">controls for model capacity</span>
+            </article>
+            <article class="control">
+              <span class="control-num">02</span>
+              <h3>Matched memory protocol</h3>
+              <p>Every memory-augmented VLM planning framework baseline follows the same memory protocol, detailed below, while each framework maintains its own native memory module.</p>
+              <span class="control-rules">controls for memory access</span>
+            </article>
+            <article class="control">
+              <span class="control-num">03</span>
+              <h3>Controlled evaluation</h3>
+              <p>All agent-framework baselines run on the <strong>same Qwen2.5-VL-72B planner</strong> with deterministic decoding (temperature 0, single trial); EmbodiedBench's executor isolates planning from low-level control.</p>
+              <span class="control-rules">controls for evaluation</span>
+            </article>
+          </div>
+
+          <h3 class="subhead">Memory Protocol <span class="muted-inline">&mdash; the procedure every framework follows</span></h3>
+          <div class="mem-flow">
+            <article class="mf-step">
+              <span class="mf-tag">Step 1</span>
+              <h4>Build</h4>
+              <p>The standalone Qwen2.5-VL-72B-Instruct agent runs all 400 tasks, accumulating experience as it goes.</p>
+            </article>
+            <span class="mf-arrow">&rarr;</span>
+            <article class="mf-step">
+              <span class="mf-tag">Step 2</span>
+              <h4>Freeze</h4>
+              <p>The accumulated memory is frozen, so the experience available at evaluation is fixed.</p>
+            </article>
+            <span class="mf-arrow">&rarr;</span>
+            <article class="mf-step">
+              <span class="mf-tag">Step 3</span>
+              <h4>Apply</h4>
+              <p>Every framework is evaluated under this same protocol, each accessing memory through its own module.</p>
+            </article>
+          </div>
+          <p class="impl-note">The protocol is identical across frameworks and driven by the base planner itself, not a stronger external agent, so no framework benefits from a more favorable memory setup.</p>
+
+          <h3 class="subhead">Reproducibility <span class="muted-inline">&mdash; models, benchmark &amp; training</span></h3>
+          <div class="spec-grid">
+            <div class="spec-group">
+              <h3>Models</h3>
+              <dl class="spec-list">
+                <div class="spec-row"><dt>Planner &amp; critic</dt><dd>Qwen2.5-VL-72B-Instruct <span class="spec-tag">frozen</span></dd></div>
+                <div class="spec-row"><dt>Memory adapter</dt><dd>Qwen3-14B <span class="spec-tag">LoRA SFT</span></dd></div>
+                <div class="spec-row"><dt>Target teacher</dt><dd>GPT-5.1 (one-shot)</dd></div>
+                <div class="spec-row"><dt>Consensus filter</dt><dd>InternVL3-14B &middot; InternVL3-78B</dd></div>
+                <div class="spec-row"><dt>Retriever</dt><dd>bge-large-en-v1.5, top-K = 5</dd></div>
+              </dl>
+            </div>
+            <div class="spec-group">
+              <h3>Memory &amp; Benchmark</h3>
+              <dl class="spec-list">
+                <div class="spec-row"><dt>Memory (ours)</dt><dd>RoboMemory multi-memory, unchanged</dd></div>
+                <div class="spec-row"><dt>Benchmark</dt><dd>EmbodiedBench</dd></div>
+                <div class="spec-row"><dt>Environments</dt><dd>EB-ALFRED &amp; EB-Habitat</dd></div>
+                <div class="spec-row"><dt>Tasks</dt><dd>4 subsets &times; 50 &times; 2 = 400</dd></div>
+                <div class="spec-row"><dt>Decoding</dt><dd>Deterministic (temp 0), single trial</dd></div>
+              </dl>
+            </div>
+            <div class="spec-group">
+              <h3>SFT Config <span class="muted-inline" style="font-weight:400">&mdash; Qwen3-14B</span></h3>
+              <dl class="spec-list">
+                <div class="spec-row"><dt>LoRA r / &alpha; / dropout</dt><dd>16 / 32 / 0.05</dd></div>
+                <div class="spec-row"><dt>Epochs</dt><dd>6</dd></div>
+                <div class="spec-row"><dt>LR / schedule</dt><dd>1e-4, cosine, 5% warmup</dd></div>
+                <div class="spec-row"><dt>Batch / max len</dt><dd>16 &middot; 8096 tokens</dd></div>
+                <div class="spec-row"><dt>Hardware</dt><dd>single node, ~60 GB VRAM (~30 with QLoRA)</dd></div>
+              </dl>
+            </div>
+          </div>
+          <p class="table-legend">Base weights frozen in bf16 with FlashAttention-2; trained only on the filtered <a href="https://huggingface.co/datasets/NMThuan032k/MemGuide" target="_blank" rel="noopener">MemGuide</a> targets. Full config ships with the <a href="https://github.com/thuannguyen25032k/MemAdapt" target="_blank" rel="noopener">code release</a>.</p>
+        </div>
+      </section>
+
+      <section class="section section-alt">
+        <div class="container">
           <h2>Citation</h2>
           <pre><code>@article{nguyen2026memadapter,
   title   = {MemAdapter: Structuring Retrieved Memories for VLM-Based Embodied Planning},
