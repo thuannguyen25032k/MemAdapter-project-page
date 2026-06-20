@@ -394,28 +394,35 @@ Instruction: "Heat a piece of apple and place it in the fridge"
             <span class="arrow">&darr;</span> MemAdapter <span class="arrow">&darr;</span>
           </div>
 
-          <h3 class="subhead">Foresight Plan <span class="tag">P</span> <span class="muted-inline">&mdash; a 21-step task hypothesis, grouped into three phases</span></h3>
+          <h3 class="subhead">Foresight Plan <span class="tag">P</span> <span class="muted-inline">&mdash; a 21-step plan, implicitly grouped into three phases</span></h3>
           <div class="phase-grid">
             <article class="phase">
               <h4>1. Slice the bread</h4>
               <p class="phase-sub">Steps 1&ndash;8</p>
               <ol class="step-list">
-                <li>Find &amp; pick up the Knife</li>
-                <li>Find Bread (in DiningTable_2)</li>
-                <li>Slice the Bread</li>
-                <li>Find a CounterTop</li>
-                <li class="key">Put the Knife down to free the gripper</li>
-                <li>Find &amp; pick up the bread slice</li>
+                <li>Find a Knife</li>
+                <li>Pick up the Knife</li>
+                <li>Find Bread (navigate to Bread in DiningTable_2).</li>
+                <li>Slice the Bread (create a bread slice).</li>
+                <li>Find a CounterTop (navigate to CounterTop).</li>
+                <li class="key">Put down the object in hand (place the Knife on CounterTop to free the gripper).</li>
+                <li>Find a Bread (navigate to the sliced Bread piece).</li>
+                <li>Pick up the Bread (pick up the bread slice).</li>
               </ol>
             </article>
             <article class="phase">
               <h4>2. Heat in the microwave</h4>
               <p class="phase-sub">Steps 9&ndash;18</p>
               <ol class="step-list">
-                <li>Find the Microwave, open it</li>
-                <li>Place the slice inside, close</li>
-                <li>Turn on, then turn off</li>
-                <li>Open, pick up the heated slice</li>
+                <li>Find a Microwave (navigate to Microwave).</li>
+                <li>Open the Microwave.</li>
+                <li>Put down the object in hand (place the bread slice on Microwave).</li>
+                <li>Close the Microwave.</li>
+                <li>Turn on the Microwave (heat the bread slice).</li>
+                <li>Turn off the Microwave (after heating is complete).</li>
+                <li>Open the Microwave.</li>
+                <li>Find a Bread (navigate to the heated bread slice in Microwave).</li>
+                <li>Pick up the Bread (pick up the heated bread slice).</li>
                 <li>Close the Microwave</li>
               </ol>
             </article>
@@ -423,9 +430,9 @@ Instruction: "Heat a piece of apple and place it in the fridge"
               <h4>3. Serve by the spoon</h4>
               <p class="phase-sub">Steps 19&ndash;21</p>
               <ol class="step-list">
-                <li>Find the DiningTable (where the Spoon is)</li>
-                <li>Locate the Spoon</li>
-                <li class="key">Place the slice on the DiningTable <em>near</em> the Spoon</li>
+                <li>Find the DiningTable (navigate to DiningTable where Spoon is located).</li>
+                <li>Find a Spoon (navigate to Spoon on DiningTable).</li>
+                <li class="key">Put down the object in hand (place the heated bread slice on DiningTable near the Spoon).</li>
               </ol>
             </article>
           </div>
